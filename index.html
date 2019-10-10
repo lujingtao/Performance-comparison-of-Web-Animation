@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>前端动画性能比较-大话主席</title>
+</head>
+<style>
+*{
+    margin:0; 
+    padding:0;
+}
+h3{
+    text-align:center;
+    padding-top:1.5%;
+}
+.demo{
+    width:90%;
+    margin:1.5% auto;
+    padding:1%;
+    box-shadow: 0 0 5px #ccc;
+}
+.main{
+    margin:20px 0;
+    border:1px solid #ccc;
+    min-height:50px;
+    position: relative;
+}
+.item{
+    width:50px;
+    height:50px;
+    text-align: center;
+    line-height: 50px;
+    color:#fff;
+    background-color: red;
+    left:0;
+    top:0;
+    position: absolute;
+    z-index:100;
+}
+.cssAnimate{
+    transition: 0ms;
+    transform: translateX(10px)
+}
+button{
+    padding:2px 10px;
+    margin:5px;
+}
+.addItems,
+.reload{
+    float:right;
+}
+.header strong{
+    color:red;
+    margin:0 5px;
+}
+</style>
+<body>
+<h3>前端动画性能比较-大话主席</h3>
+<div class="demo">
+    <header class="header">现在有<strong class="itemCount">1</strong>个item做<strong class="itemSport"></strong>运动</header>
+    <section class="main">
+        <div class="item">item</div>
+    </section>
+    <footer class="footer">
+        <button class="addItems">增加50个item</button>
+        <button class="reload">重置</button>
+        <button class="leftPlay">js:left播放</button>  <button class="pause">暂停</button> <button class="leftGo">left前进10px</button><br/>
+        <button class="translatePlay">js:translate播放</button>  <button class="pause">暂停</button> <button class="translateGo">translateX前进10px</button>
+        <br/>
+        <button class="cssTranslatePlay">css:translate播放</button>  <button class="cssTranslateGo">css:translate前进10px</button>
+        
+    </footer>
+</div>
+
+<div style="width:90%; margin:0 auto;">
+    <p>注意：</p>
+    <ul style="list-style:decimal">
+        <li>播放动画切换前要先点击“暂停”，否则效果会重叠，例如 js:left播放 --> 暂停 --> js:translate播放；</li>
+        <li>css:translate播放 不能暂停</li>
+        <li>使用chrome开发者工具的performance降低cup运行为4x，同时增加item个数来模拟性能负荷情况</li>
+    </ul>
+</div>
+
+<script>
+    const demo = document.querySelector(".demo");
+    const main = document.querySelector(".main");
+    const itemCount = document.querySelector(".itemCount");
+    const itemSport = document.querySelector(".itemSport");
+    const addItemCount = 50; //每次增加的item个数
+    let currentCount = 1;
+    let left=0;
+    let sportDirection = 1; //运动方向
+    let sportSwitch = true; //运动开关
+
+    //运动方法
+    const animateFunc=function(sport){
+        if(left<=0){
+            sportDirection=1;
+        }else if(left+50>=main.clientWidth){
+            sportDirection=-1;
+        }
+        left += sportDirection*5;
+        let items = demo.querySelectorAll(".item");
+        let sportStr=sport=="left"?"left:"+left+"px":"transform:translateX("+left+"px)";
+        items.forEach(item=>{
+            item.setAttribute("style",sportStr);
+        });
+        if(sportSwitch){
+            window.requestAnimationFrame(function(){
+                animateFunc(sport);
+            });
+        }
+    }
+    //事件监听
+    demo.addEventListener("click",function(e){
+        if(e.target.tagName!="BUTTON") return;
+        console.log(e.target.innerText);
+        switch(e.target.getAttribute("class")){
+            case "leftGo":
+                //itemSport.innerHTML="left";
+                left+=10;
+                var items = demo.querySelectorAll(".item");
+                items.forEach(item=>{
+                    item.setAttribute("style","left:"+left+"px");
+                });
+                break;
+            case "translateGo":
+                //itemSport.innerHTML="translateX";
+                left+=10;
+                var items = demo.querySelectorAll(".item");
+                items.forEach(item=>{
+                    item.setAttribute("style","transform:translateX("+left+"px)");
+                });
+                break;
+            case "cssTranslateGo":
+                //itemSport.innerHTML="translateX";
+                left+=10;
+                var items = demo.querySelectorAll(".item");
+                items.forEach(item=>{
+                    item.classList.add("cssAnimate");
+                });
+                break;
+            case "addItems":
+                for (let j = 0; j < addItemCount; j++) {
+                    let _item= main.firstElementChild.cloneNode(true);
+                    main.appendChild(_item);
+                }
+                currentCount+=addItemCount;
+                itemCount.innerHTML=currentCount;
+                break;
+            case "leftPlay":
+                sportSwitch = true;
+                window.requestAnimationFrame(function(){
+                    animateFunc("left");
+                });
+                break;
+            case "translatePlay":
+                sportSwitch = true;
+                window.requestAnimationFrame(function(){
+                    animateFunc("translateX");
+                });
+                break;
+            case "cssTranslatePlay":
+                let distance = (main.clientWidth-50);
+                let time = (main.clientWidth-50)/5 * 17 +"ms";
+                var items = demo.querySelectorAll(".item");
+                items.forEach(item=>{
+                    item.setAttribute("style","transition:all "+time+" linear;transform:translateX("+distance+"px)");
+                });
+                break;
+            case "pause":
+                sportSwitch=false;
+                break;
+            case "reload":
+                location.reload();
+                break;
+        }
+    });
+</script>
+
+
+</body>
+</html>
